@@ -12,7 +12,9 @@ use crate::pac::NVMC;
 use crate::pac::NVMC_NS as NVMC;
 
 use core::convert::TryInto;
-use embedded_storage::nor_flash::{NorFlash, ReadNorFlash};
+use embedded_storage::nor_flash::{
+    ErrorType, NorFlash, NorFlashError, NorFlashErrorKind, ReadNorFlash,
+};
 
 type WORD = u32;
 const WORD_SIZE: usize = core::mem::size_of::<WORD>();
@@ -85,7 +87,7 @@ where
     #[cfg(any(feature = "9160", feature = "5340-app"))]
     #[inline]
     fn erase_page(&mut self, page_offset: usize) {
-        self.direct_write_word(page_offset * PAGE_SIZE, 0xffffffff);
+        self.direct_write_word(page_offset * PAGE_SIZE / WORD_SIZE, 0xffffffff);
         self.wait_ready();
     }
 
@@ -108,12 +110,14 @@ where
     }
 }
 
+impl<T: Instance> ErrorType for Nvmc<T> {
+    type Error = NvmcError;
+}
+
 impl<T> ReadNorFlash for Nvmc<T>
 where
     T: Instance,
 {
-    type Error = NvmcError;
-
     const READ_SIZE: usize = 1;
 
     fn read(&mut self, offset: u32, bytes: &mut [u8]) -> Result<(), Self::Error> {
@@ -186,6 +190,7 @@ where
     feature = "52811",
     feature = "52833",
     feature = "52840",
+    feature = "9160",
 ))]
 impl<T: Instance> embedded_storage::nor_flash::MultiwriteNorFlash for Nvmc<T> {}
 
@@ -207,4 +212,13 @@ pub enum NvmcError {
     Unaligned,
     /// An operation was attempted outside the boundaries
     OutOfBounds,
+}
+
+impl NorFlashError for NvmcError {
+    fn kind(&self) -> NorFlashErrorKind {
+        match self {
+            NvmcError::Unaligned => NorFlashErrorKind::NotAligned,
+            NvmcError::OutOfBounds => NorFlashErrorKind::OutOfBounds,
+        }
+    }
 }

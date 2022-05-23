@@ -2,11 +2,26 @@
 
 ## Unreleased
 
-### Changed
+- Fixed the nvmc erase procedure on nRF91 & nRF53 ([#387])
+
+## [0.15.0]
+
+### New Features
+
+- Implement `MultiwriteNorFlash` for nRF52 boards that support it ([#373]).
+- Enable GPIOTE module for nRF9160 ([#376]).
+
+### Enhancements
 
 - Unified how pins are are returned in `free` calls ([#372]).
+- Improvements to the NVMC driver ([#374]).
+- Updated `embedded-dma`, `embedded-storage`, and PACs ([#379]).
 
 [#372]: https://github.com/nrf-rs/nrf-hal/pull/372
+[#373]: https://github.com/nrf-rs/nrf-hal/pull/373
+[#374]: https://github.com/nrf-rs/nrf-hal/pull/374
+[#376]: https://github.com/nrf-rs/nrf-hal/pull/376
+[#379]: https://github.com/nrf-rs/nrf-hal/pull/379
 
 ## [0.14.1]
 
@@ -304,3 +319,4 @@ None
 [0.13.0]: https://github.com/nrf-rs/nrf-hal/releases/tag/v0.13.0
 [0.14.0]: https://github.com/nrf-rs/nrf-hal/releases/tag/v0.14.0
 [0.14.1]: https://github.com/nrf-rs/nrf-hal/releases/tag/v0.14.1
+[0.15.0]: https://github.com/nrf-rs/nrf-hal/releases/tag/v0.15.0
