@@ -61,16 +61,23 @@ where
 
         // Select pins
         uarte.psel.rxd.write(|w| {
-            unsafe { w.bits(pins.rxd.psel_bits()) };
-            w.connect().connected()
+            if let Some(ref pin) = pins.rxd {
+                unsafe { w.bits(pin.psel_bits()) };
+                w.connect().connected()
+            } else {
+                w.connect().disconnected()
+            }
         });
-        pins.txd.set_high().unwrap();
         uarte.psel.txd.write(|w| {
-            unsafe { w.bits(pins.txd.psel_bits()) };
-            w.connect().connected()
+            if let Some(ref pin) = pins.txd {
+                unsafe { w.bits(pin.psel_bits()) };
+                w.connect().connected()
+            } else {
+                w.connect().disconnected()
+            }
         });
+        pins.txd.as_mut().map(|txd| txd.set_high().unwrap());
 
-        // Optional pins
         uarte.psel.cts.write(|w| {
             if let Some(ref pin) = pins.cts {
                 unsafe { w.bits(pin.psel_bits()) };
@@ -294,8 +301,15 @@ where
         (
             self.0,
             Pins {
-                rxd: unsafe { Pin::from_psel_bits(rxd.bits()) },
-                txd: unsafe { Pin::from_psel_bits(txd.bits()) },
+                rxd: rxd
+                    .connect()
+                    .bit_is_set()
+                    .then(|| unsafe { Pin::from_psel_bits(rxd.bits()) }),
+                txd: if txd.connect().bit_is_set() {
+                    Some(unsafe { Pin::from_psel_bits(txd.bits()) })
+                } else {
+                    None
+                },
                 cts: if cts.connect().bit_is_set() {
                     Some(unsafe { Pin::from_psel_bits(cts.bits()) })
                 } else {
@@ -465,8 +479,8 @@ where
 }
 
 pub struct Pins {
-    pub rxd: Pin<Input<Floating>>,
-    pub txd: Pin<Output<PushPull>>,
+    pub rxd: Option<Pin<Input<Floating>>>,
+    pub txd: Option<Pin<Output<PushPull>>>,
     pub cts: Option<Pin<Input<Floating>>>,
     pub rts: Option<Pin<Output<PushPull>>>,
 }
